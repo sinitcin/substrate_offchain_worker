@@ -2,7 +2,7 @@ use crate as example_offchain_worker;
 use crate::*;
 use codec::Decode;
 use frame_support::{
-	assert_ok, parameter_types,
+	parameter_types,
 	traits::{ConstU32, ConstU64},
 };
 use sp_core::{
@@ -11,7 +11,7 @@ use sp_core::{
 	H256,
 };
 
-use sp_keystore::{testing::MemoryKeystore, Keystore, KeystoreExt};
+use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
@@ -103,10 +103,6 @@ impl Config for Test {
 	type MaxPrices = ConstU32<64>;
 }
 
-fn test_pub() -> sp_core::sr25519::Public {
-	sp_core::sr25519::Public::from_raw([1u8; 32])
-}
-
 #[test]
 fn should_make_http_call_and_parse_result() {
 	let (offchain, state) = testing::TestOffchainExt::new();
@@ -174,7 +170,7 @@ fn should_submit_unsigned_transaction_on_chain_for_all_accounts() {
 	let (offchain, offchain_state) = testing::TestOffchainExt::new();
 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
 
-	let keystore = MemoryKeystore::new();
+	let keystore = KeyStore::new();
 
 	keystore
 		.sr25519_generate_new(crate::crypto::Public::ID, Some(&format!("{}/hunter1", PHRASE)))
@@ -185,7 +181,7 @@ fn should_submit_unsigned_transaction_on_chain_for_all_accounts() {
 	let mut t = sp_io::TestExternalities::default();
 	t.register_extension(OffchainWorkerExt::new(offchain));
 	t.register_extension(TransactionPoolExt::new(pool));
-	t.register_extension(KeystoreExt::new(keystore));
+	t.register_extension(KeystoreExt(keystore.into()));
 
 	price_oracle_response(&mut offchain_state.write());
 
