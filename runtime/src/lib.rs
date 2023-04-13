@@ -13,7 +13,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, One, Verify,
+		self, AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, One,
+		Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
@@ -210,7 +211,6 @@ impl pallet_aura::Config for Runtime {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-use crate::pallets::template;
 use codec::Encode;
 use sp_runtime::{generic::Era, SaturatedConversion};
 
@@ -269,8 +269,21 @@ where
 	type OverarchingCall = RuntimeCall;
 }
 
-impl template::pallet::Config for Runtime {
-	type AuthorityId = template::crypto::TestAuthId;
+parameter_types! {
+	pub const GracePeriod: BlockNumber = 3;
+	pub const UnsignedInterval: BlockNumber = 3;
+	pub const UnsignedPriority: BlockNumber = 3;
+	pub const MaxPrices: u32 = 20000;
+}
+
+impl pallet_template::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	// type Call = Call;
+	type AuthorityId = pallet_template::crypto::TestAuthId;
+	type GracePeriod = GracePeriod;
+	type UnsignedInterval = UnsignedInterval;
+	type UnsignedPriority = UnsignedPriority;
+	type MaxPrices = MaxPrices;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -326,11 +339,6 @@ impl pallet_transaction_payment::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-}
-
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
